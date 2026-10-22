@@ -1,24 +1,25 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  withCredentials: true,          // cookie mode
-  headers: { Accept: "application/json" },
+  baseURL: `${import.meta.env.VITE_API_URL}/api`,
+  withCredentials: true,
+  withXSRFToken: true,
+  headers: {
+    Accept: "application/json",
+    "X-Requested-With": "XMLHttpRequest",
+  },
 });
 
-// Antes de qualquer pedido que altere estado, obter o CSRF cookie
 export async function ensureCsrf() {
-  await api.get("/sanctum/csrf-cookie");
+  await api.get("/sanctum/csrf-cookie", { baseURL: import.meta.env.VITE_API_URL });
 }
 
-// Interceptor: em 401, limpar estado e redirecionar para /login
 api.interceptors.response.use(
-  (r) => r,
-  (err) => {
-    if (err.response?.status === 401) {
-      // evento global para o shell reagir
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
       window.dispatchEvent(new CustomEvent("auth:expired"));
     }
-    return Promise.reject(err);
+    return Promise.reject(error);
   }
 );
