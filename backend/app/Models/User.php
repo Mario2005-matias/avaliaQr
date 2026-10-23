@@ -34,7 +34,7 @@ class User extends Authenticatable
         ];
     }
 
-     public function isAdmin(): bool
+    public function isAdmin(): bool
     {
         return $this->role === Role::Admin;
     }
@@ -42,5 +42,10 @@ class User extends Authenticatable
     public function serviceSessions()
     {
         return $this->hasMany(ServiceSession::class, 'technician_id');
+    }
+
+    public function isTechnician(): bool
+    {
+        return $this->role === \App\Enums\Role::Technician;
     }
 }
