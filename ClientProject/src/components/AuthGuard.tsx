@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { api } from "../lib/api";
-import { User } from "../types/index";
+import type { User } from "../types/index";
 
-export function AuthGuard({ children }: { children: React.ReactNode }) {
+export function AuthGuard({
+  children,
+  requiredRole,
+}: {
+  children: React.ReactNode;
+  requiredRole?: User["role"];
+}) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const location = useLocation();
@@ -13,7 +19,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       try {
         const { data } = await api.get("/me");
         setUser(data);
-      } catch (error) {
+      } catch {
         setUser(null);
       } finally {
         setLoading(false);
@@ -26,6 +32,15 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (requiredRole && user.role !== requiredRole) {
+    return (
+      <Navigate
+        to={user.role === "admin" ? "/admin/ratings" : "/technician/today"}
+        replace
+      />
+    );
   }
 
   return <>{children}</>;

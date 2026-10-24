@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { api } from "../../lib/api";
+import type { Session } from "../../types/index";
 
 export default function QrScreen() {
   const { id } = useParams();
@@ -10,8 +11,31 @@ export default function QrScreen() {
   
   // Tenta apanhar os dados via state (quando vem do botão "Criar"),
   // ou faz fetch se for uma entrada direta na página.
-  const [token, setToken] = useState<string | null>(location.state?.token || null);
-  const [schoolName, setSchoolName] = useState<string>(location.state?.schoolName || "Atendimento");
+  const [token] = useState<string | null>(location.state?.token || null);
+  const [schoolName] = useState<string>(location.state?.schoolName || "Atendimento");
+  const [ratingsCount, setRatingsCount] = useState(0);
+  const [counterLoading, setCounterLoading] = useState(false);
+  const [counterError, setCounterError] = useState<string | null>(null);
+
+  async function refreshCounter() {
+    if (!id) return;
+
+    setCounterLoading(true);
+    setCounterError(null);
+    try {
+      const { data } = await api.get<Session[]>("/technician/sessions/today");
+      const session = data.find((item) => item.id === Number(id));
+      if (!session) {
+        setCounterError("Não foi possível encontrar este atendimento.");
+        return;
+      }
+      setRatingsCount(session.ratings_count);
+    } catch {
+      setCounterError("Não foi possível actualizar o contador. Tenta novamente.");
+    } finally {
+      setCounterLoading(false);
+    }
+  }
 
   useEffect(() => {
     // Se não tiver o token em memória (ex: fez refresh na página), 
@@ -44,6 +68,19 @@ export default function QrScreen() {
 
       <div className="bg-white p-4 rounded-xl shadow-lg border">
         <QRCodeSVG value={url} size={280} level="M" />
+      </div>
+
+      <div className="mt-6 text-center">
+        <p className="text-gray-700">Avaliações recebidas: <strong>{ratingsCount}</strong></p>
+        <button
+          type="button"
+          onClick={refreshCounter}
+          disabled={counterLoading}
+          className="mt-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        >
+          {counterLoading ? "A actualizar..." : "Actualizar Contador"}
+        </button>
+        {counterError && <p role="alert" className="mt-2 text-sm text-red-600">{counterError}</p>}
       </div>
 
       <p className="mt-8 text-sm text-gray-400">

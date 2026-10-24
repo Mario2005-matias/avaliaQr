@@ -1,4 +1,6 @@
-import { FormEvent, useState } from "react";
+import { useState } from "react";
+import type { FormEvent } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { api, ensureCsrf } from "../lib/api";
 
@@ -22,10 +24,10 @@ export default function Login() {
       } else {
         navigate("/technician/today");
       }
-    } catch (err: any) {
-      if (err.response?.status === 422) {
+    } catch (error: unknown) {
+      if (axios.isAxiosError<{ errors?: { email?: string[] } }>(error) && error.response?.status === 422) {
         setError(
-          err.response.data.errors?.email?.[0] || "Credenciais inválidas.",
+          error.response.data.errors?.email?.[0] || "Credenciais inválidas.",
         );
       } else {
         setError("Erro de ligação ao servidor. Tenta novamente.");

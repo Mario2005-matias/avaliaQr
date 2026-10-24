@@ -5,10 +5,12 @@ import { AuthGuard } from "./components/AuthGuard";
 import { TechnicianLayout } from "./layouts/TechnicianLayout";
 import Today from "./pages/technician/today";
 import QrScreen from "./pages/technician/QrScreen";
-
-// Placeholders para as outras rotas
-const AdminDashboard = () => <div className="p-8">Painel do Administrador (em construção)</div>;
-const TechnicianRatings = () => <div className="p-8">Avaliações do Técnico (em construção)</div>;
+import TechnicianRatings from "./pages/technician/TechnicianRatings";
+import { AdminLayout } from "./layouts/AdminLayout";
+import AdminRatings from "./pages/admin/AdminRatings";
+import AdminTechnicians from "./pages/admin/AdminTechnicians";
+import AdminSchools from "./pages/admin/AdminSchools";
+import AdminReports from "./pages/admin/AdminReports";
 
 export default function App() {
   return (
@@ -21,15 +23,20 @@ export default function App() {
         <Route path="/avaliar/:token" element={<Evaluate />} />
 
         {/* Rotas Protegidas do Técnico */}
-        <Route path="/technician" element={<AuthGuard><TechnicianLayout /></AuthGuard>}>
+        <Route path="/technician" element={<AuthGuard requiredRole="technician"><TechnicianLayout /></AuthGuard>}>
           <Route index element={<Navigate to="/technician/today" replace />} />
           <Route path="today" element={<Today />} />
           <Route path="ratings" element={<TechnicianRatings />} />
           <Route path="session/:id" element={<QrScreen />} />
         </Route>
 
-        {/* Rotas Protegidas do Admin */}
-        <Route path="/admin/ratings" element={<AdminDashboard />} />
+        <Route path="/admin" element={<AuthGuard requiredRole="admin"><AdminLayout /></AuthGuard>}>
+          <Route index element={<Navigate to="/admin/ratings" replace />} />
+          <Route path="technicians" element={<AdminTechnicians />} />
+          <Route path="schools" element={<AdminSchools />} />
+          <Route path="ratings" element={<AdminRatings />} />
+          <Route path="reports" element={<AdminReports />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

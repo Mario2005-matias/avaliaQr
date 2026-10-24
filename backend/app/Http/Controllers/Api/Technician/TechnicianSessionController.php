@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Technician;
 
 use App\Http\Controllers\Controller;
+use App\Models\Rating;
 use App\Models\School;
 use App\Models\ServiceSession;
 use App\Services\ServiceSessionService;
@@ -32,7 +33,8 @@ class TechnicianSessionController extends Controller
                     'id' => $session->id,
                     'school_name' => $session->school->name,
                     'created_at' => $session->created_at->setTimezone('Africa/Luanda')->format('H:i'),
-                    'expires_at' => $session->expires_at->setTimezone('Africa/Luanda')->format('H:i'),
+                    'expires_at' => $session->expires_at->setTimezone('Africa/Luanda')->toIso8601String(),
+                    'is_expired' => $session->expires_at->isPast(),
                     'revoked_at' => $session->revoked_at,
                     'ratings_count' => $session->validRatings()->count(),
                     'average_rating' => round($session->validRatings()->avg('stars') ?? 0, 1),
@@ -48,7 +50,7 @@ class TechnicianSessionController extends Controller
     public function store(Request $request): JsonResponse
     {
         $request->validate([
-            'school_id' => ['required', 'exists:schools,id']
+            'school_id' => ['required', 'exists:schools,id'],
         ]);
 
         try {
@@ -92,6 +94,35 @@ class TechnicianSessionController extends Controller
     public function schools(): JsonResponse
     {
         $schools = School::where('active', true)->orderBy('name')->get(['id', 'name']);
+
         return response()->json($schools);
+    }
+
+    /**
+     * Lista as avaliações válidas do técnico autenticado.
+     */
+    public function ratings(Request $request): JsonResponse
+    {
+        $ratings = Rating::query()
+            ->with('serviceSession.school')
+            ->whereNull('invalidated_at')
+            ->whereHas('serviceSession', function ($query) use ($request) {
+                $query->where('technician_id', $request->user()->id);
+            })
+            ->orderByDesc('created_at')
+            ->get();
+
+        return response()->json([
+            'average_rating' => round($ratings->avg('stars') ?? 0, 1),
+            'total' => $ratings->count(),
+            'ratings' => $ratings->map(fn (Rating $rating) => [
+                'stars' => $rating->stars,
+                'comment' => $rating->comment,
+                'created_at' => $rating->created_at
+                    ->setTimezone('Africa/Luanda')
+                    ->toIso8601String(),
+                'school_name' => $rating->serviceSession->school->name,
+            ])->values(),
+        ]);
     }
 }

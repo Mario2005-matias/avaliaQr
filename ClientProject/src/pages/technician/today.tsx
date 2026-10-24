@@ -7,30 +7,40 @@ export default function Today() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [schools, setSchools] = useState<School[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reloadKey, setReloadKey] = useState(0);
   
   // Estado do Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSchool, setSelectedSchool] = useState("");
   const navigate = useNavigate();
 
-  async function loadData() {
-    try {
-      const [sessionsRes, schoolsRes] = await Promise.all([
+  useEffect(() => {
+    let isCurrent = true;
+    Promise.all([
         api.get("/technician/sessions/today"),
         api.get("/technician/schools"),
-      ]);
-      setSessions(sessionsRes.data);
-      setSchools(schoolsRes.data);
-    } catch (err) {
-      console.error("Erro ao carregar dados", err);
-    } finally {
-      setLoading(false);
-    }
-  }
+      ])
+      .then(([sessionsRes, schoolsRes]) => {
+        if (isCurrent) {
+          setSessions(sessionsRes.data);
+          setSchools(schoolsRes.data);
+        }
+      })
+      .catch((error: unknown) => {
+        if (isCurrent) {
+          console.error("Erro ao carregar dados", error);
+        }
+      })
+      .finally(() => {
+        if (isCurrent) {
+          setLoading(false);
+        }
+      });
 
-  useEffect(() => {
-    loadData();
-  }, []);
+    return () => {
+      isCurrent = false;
+    };
+  }, [reloadKey]);
 
   async function handleCreateSession(e: React.FormEvent) {
     e.preventDefault();
@@ -42,15 +52,19 @@ export default function Today() {
       navigate(`/technician/session/${data.session_id}`, { 
         state: { token: data.token, schoolName: data.school_name } 
       });
-    } catch (err) {
+    } catch {
       alert("Erro ao criar sessão.");
     }
   }
 
   async function handleRevoke(id: number) {
     if (!confirm("Encerrar este QR?")) return;
-    await api.delete(`/technician/sessions/${id}`);
-    loadData(); // Recarrega a lista
+    try {
+      await api.delete(`/technician/sessions/${id}`);
+      setReloadKey((key) => key + 1);
+    } catch {
+      alert("Não foi possível encerrar o atendimento.");
+    }
   }
 
   if (loading) return <div>A carregar...</div>;
@@ -74,7 +88,7 @@ export default function Today() {
       ) : (
         <div className="grid gap-4">
           {sessions.map((s) => {
-            const isExpired = new Date(s.expires_at) < new Date();
+            const isExpired = s.is_expired;
             const isRevoked = s.revoked_at !== null;
             const isInactive = isExpired || isRevoked;
 
@@ -84,7 +98,7 @@ export default function Today() {
                   <div>
                     <h3 className="font-bold text-lg text-gray-800">{s.school_name}</h3>
                     <p className="text-sm text-gray-500">
-                      {s.created_at} → {s.expires_at} · {s.ratings_count} avaliações 
+                      {s.created_at} → {new Date(s.expires_at).toLocaleTimeString("pt-AO", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Luanda" })} · {s.ratings_count} avaliações
                       {s.ratings_count > 0 && ` · ★ ${s.average_rating}`}
                     </p>
                   </div>
@@ -111,7 +125,7 @@ export default function Today() {
                     </>
                   )}
                   {isInactive && (
-                    <button className="text-blue-600 px-4 py-1.5 text-sm hover:underline">
+                    <button onClick={() => navigate("/technician/ratings")} className="text-blue-600 px-4 py-1.5 text-sm hover:underline">
                       Ver avaliações
                     </button>
                   )}
