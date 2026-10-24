@@ -146,7 +146,7 @@ class AdminManagementTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->getJson("/api/admin/ratings?technician_id={$technician->id}&school_id={$school->id}&month=".now('Africa/Luanda')->format('Y-m'))
+            ->getJson("/api/admin/ratings?technician_id={$technician->id}&school_id={$school->id}&month=".now('Africa/Luanda')->format('Y-m').'&search=Coment%C3%A1rio+administrativo')
             ->assertOk()
             ->assertJsonPath('total', 1)
             ->assertJsonPath('data.0.invalidated_by', $admin->name)

@@ -1,9 +1,14 @@
-import { Link, Outlet, useNavigate } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { api } from "../lib/api";
+import { LanguageToggle } from "../components/LanguageToggle";
+import { ThemeToggle } from "../components/ThemeToggle";
 
 export function AdminLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { t } = useTranslation();
   const [error, setError] = useState<string | null>(null);
 
   async function handleLogout() {
@@ -12,27 +17,45 @@ export function AdminLayout() {
       await api.post("/logout");
       navigate("/login");
     } catch {
-      setError("Não foi possível terminar a sessão. Tenta novamente.");
+      setError(t("adminLayout.logoutError"));
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow-sm">
+    <div className="min-h-screen bg-gray-50 transition-colors duration-300 dark:bg-slate-900">
+      <nav className="border-b border-gray-100 bg-white/70 shadow-sm backdrop-blur-md transition-colors duration-300 dark:border-slate-700 dark:bg-slate-900/70">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap gap-x-5 gap-y-2 font-medium text-gray-700">
-            <Link to="/admin/technicians" className="hover:text-blue-600">Técnicos</Link>
-            <Link to="/admin/schools" className="hover:text-blue-600">Colégios</Link>
-            <Link to="/admin/ratings" className="hover:text-blue-600">Avaliações</Link>
-            <Link to="/admin/reports" className="hover:text-blue-600">Relatórios</Link>
+          <div className="flex flex-wrap gap-2 font-medium text-gray-600">
+            {[
+              { to: "/admin/technicians", label: t("navigation.technicians") },
+              { to: "/admin/schools", label: t("navigation.schools") },
+              { to: "/admin/ratings", label: t("navigation.ratings") },
+              { to: "/admin/reports", label: t("navigation.reports") },
+            ].map(({ to, label }) => (
+              <Link
+                key={to}
+                to={to}
+                className={`rounded-xl px-3 py-2 transition-colors ${
+                  location.pathname === to
+                    ? "bg-indigo-50 font-semibold text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300"
+                    : "hover:bg-gray-50 hover:text-gray-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-50"
+                }`}
+              >
+                {label}
+              </Link>
+            ))}
           </div>
-          <button onClick={handleLogout} className="self-start text-sm text-gray-500 hover:text-red-600 sm:self-auto">
-            Sair
-          </button>
+          <div className="flex items-center gap-1 self-start sm:self-auto">
+            <ThemeToggle />
+            <LanguageToggle />
+            <button onClick={handleLogout} className="self-start rounded-xl px-3 py-2 text-sm text-gray-500 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:text-slate-400 dark:hover:bg-rose-500/10 dark:hover:text-rose-300 sm:self-auto">
+              {t("navigation.logout")}
+            </button>
+          </div>
         </div>
       </nav>
-      <main className="mx-auto max-w-6xl space-y-4 p-4 py-8">
-        {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-red-700">{error}</p>}
+      <main className="mx-auto max-w-6xl space-y-4 p-4 py-8 text-gray-900 dark:text-slate-50">
+        {error && <p role="alert" className="rounded-2xl bg-rose-100 p-3 text-rose-700 dark:bg-rose-950/50 dark:text-rose-200">{error}</p>}
         <Outlet />
       </main>
     </div>

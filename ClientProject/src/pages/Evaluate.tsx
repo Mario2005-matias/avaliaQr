@@ -4,8 +4,13 @@ import { api } from "../lib/api";
 import { getDeviceId } from "../utils/device";
 import { StarsInput } from "../components/StarsInput";
 import axios from "axios";
+import { motion, useReducedMotion } from "framer-motion";
+import { useTranslation } from "react-i18next";
+import { DisplayPreferences } from "../components/DisplayPreferences";
 
 export default function Evaluate() {
+  const { t } = useTranslation();
+  const reduceMotion = useReducedMotion();
   const { token } = useParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +32,7 @@ export default function Evaluate() {
         const { data } = await api.get(`/public/service-sessions/${token}`);
         
         if (data.is_full) {
-          setError("Este atendimento já recebeu o número máximo de avaliações.");
+          setError(t("evaluate.full"));
           return;
         }
 
@@ -37,20 +42,20 @@ export default function Evaluate() {
         const code = axios.isAxiosError<{ error?: string }>(error)
           ? error.response?.data?.error
           : undefined;
-        if (code === "SESSAO_EXPIRADA") setError("Este QR code já expirou.");
-        else if (code === "SESSAO_REVOGADA") setError("Este atendimento foi encerrado.");
-        else setError("QR code inválido. Confirma com o técnico.");
+        if (code === "SESSAO_EXPIRADA") setError(t("evaluate.expired"));
+        else if (code === "SESSAO_REVOGADA") setError(t("evaluate.revoked"));
+        else setError(t("evaluate.invalidToken"));
       } finally {
         setLoading(false);
       }
     }
     fetchSession();
-  }, [token]);
+  }, [token, t]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (stars === 0) {
-      setError("Escolhe de 1 a 5 estrelas.");
+      setError(t("evaluate.chooseStars"));
       return;
     }
 
@@ -68,25 +73,32 @@ export default function Evaluate() {
       const code = axios.isAxiosError<{ error?: string }>(error)
         ? error.response?.data?.error
         : undefined;
-      if (code === "JA_AVALIASTE") setError("Já avaliaste este atendimento. Obrigado!");
-      else if (code === "LIMITE_ATINGIDO") setError("Este atendimento já recebeu o número máximo de avaliações.");
-      else if (code === "RATE_LIMIT") setError("Demasiadas tentativas. Tenta novamente daqui a pouco.");
-      else setError("Ocorreu um erro. Tenta novamente.");
+      if (code === "JA_AVALIASTE") setError(t("evaluate.alreadyRated"));
+      else if (code === "LIMITE_ATINGIDO") setError(t("evaluate.full"));
+      else if (code === "RATE_LIMIT") setError(t("evaluate.rateLimit"));
+      else setError(t("common.error"));
     } finally {
       setIsSubmitting(false);
     }
   }
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">A carregar...</div>;
+    return (
+      <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 to-white text-gray-600 dark:from-slate-950 dark:to-slate-900 dark:text-slate-400">
+        <DisplayPreferences />
+        <span className="mr-3 h-5 w-5 animate-spin rounded-full border-2 border-indigo-200 border-t-indigo-600" aria-hidden="true" />
+        {t("evaluate.loading")}
+      </div>
+    );
   }
 
   if (success) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-gray-50">
-        <div className="text-6xl text-green-500 mb-4">✓</div>
-        <h1 className="text-2xl font-bold mb-2">Obrigado pela tua avaliação!</h1>
-        <p className="text-gray-600">A tua opinião ajuda-nos a melhorar o suporte.</p>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-indigo-50 to-white p-6 text-center dark:from-slate-950 dark:to-slate-900">
+        <DisplayPreferences />
+        <motion.div initial={reduceMotion ? false : { scale: 0, rotate: -25 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 220, damping: 16 }} className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-4xl text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300">✓</motion.div>
+        <h1 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-slate-50">{t("evaluate.successTitle")}</h1>
+        <p className="text-gray-600 dark:text-slate-400">{t("evaluate.successSubtitle")}</p>
       </div>
     );
   }
@@ -94,65 +106,76 @@ export default function Evaluate() {
   // Se houver erro e não houver técnico carregado (erro fatal de validação do QR)
   if (error && !technician) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-gray-50">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-indigo-50 to-white p-6 text-center dark:from-slate-950 dark:to-slate-900">
+        <DisplayPreferences />
         <div className="text-6xl text-red-500 mb-4">⚠</div>
-        <h1 className="text-xl font-bold mb-2">Não foi possível avaliar</h1>
-        <p className="text-gray-600">{error}</p>
+        <h1 className="mb-2 text-xl font-bold text-gray-900 dark:text-slate-50">{t("evaluate.fatalTitle")}</h1>
+        <p className="text-gray-600 dark:text-slate-400">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center pt-12 px-6 bg-gray-50">
+    <div className="relative flex min-h-screen flex-col items-center bg-gradient-to-br from-indigo-50 to-white px-5 py-16 transition-colors duration-300 sm:px-6 sm:py-12 dark:from-slate-950 dark:to-slate-900">
+      <DisplayPreferences />
       {/* Cabeçalho do Técnico */}
-      <div className="flex flex-col items-center mb-8">
+      <motion.div initial={reduceMotion ? false : { opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }} className="mb-8 flex w-full max-w-md flex-col items-center rounded-3xl border border-white/80 bg-white/80 p-6 text-center shadow-sm backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/80">
         {technician?.photo_url ? (
           <img
             src={technician.photo_url}
             alt={technician.name}
-            className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md mb-4"
+            className="mb-4 h-24 w-24 rounded-full border-4 border-white object-cover shadow-md"
           />
         ) : (
-          <div className="w-24 h-24 rounded-full bg-gray-300 flex items-center justify-center text-white text-3xl font-bold mb-4">
+          <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-indigo-100 text-3xl font-bold text-indigo-600">
             {technician?.name.charAt(0)}
           </div>
         )}
-        <h1 className="text-2xl font-bold text-gray-800">{technician?.name}</h1>
-        <p className="text-gray-500">{school?.name}</p>
-      </div>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">{technician?.name}</h1>
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
+            {t("evaluate.active")}
+          </span>
+        </div>
+        <p className="mt-1 text-gray-600 dark:text-slate-400">{school?.name}</p>
+      </motion.div>
 
       {/* Formulário */}
-      <form onSubmit={handleSubmit} className="w-full max-w-md bg-white p-6 rounded-lg shadow-sm space-y-6">
-        <h2 className="text-center text-lg font-medium text-gray-700">Como foi o atendimento?</h2>
+      <motion.form initial={reduceMotion ? false : { opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: reduceMotion ? 0 : 0.1 }} onSubmit={handleSubmit} className="w-full max-w-md space-y-6 rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-700 dark:bg-slate-800">
+        <h2 className="text-center text-lg font-semibold tracking-tight text-gray-900 dark:text-slate-50">{t("evaluate.question")}</h2>
         
         <StarsInput value={stars} onChange={setStars} disabled={isSubmitting} />
 
         <div>
           <textarea
-            placeholder="Queres dizer mais alguma coisa? (opcional)"
+            placeholder={t("evaluate.commentPlaceholder")}
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             maxLength={1000}
             disabled={isSubmitting}
-            className="w-full border border-gray-300 rounded p-3 focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+            className="w-full resize-none rounded-xl border border-gray-200 bg-white p-3 text-gray-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-50"
             rows={4}
           />
-          <div className="text-right text-xs text-gray-400 mt-1">{comment.length}/1000</div>
+          <div className="mt-1 text-right text-xs text-gray-400">{t("evaluate.characterCount", { count: comment.length })}</div>
         </div>
 
-        {error && <div className="bg-red-50 text-red-600 p-3 rounded text-sm text-center">{error}</div>}
+        {error && <div role="alert" className="rounded-xl bg-rose-100 p-3 text-center text-sm text-rose-700 dark:bg-rose-950/50 dark:text-rose-200">{error}</div>}
 
-        <button
+        <motion.button
           type="submit"
           disabled={isSubmitting}
-          className="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          whileHover={reduceMotion ? undefined : { scale: 1.02 }}
+          whileTap={reduceMotion ? undefined : { scale: 0.98 }}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3.5 font-semibold text-white transition-all duration-200 hover:bg-indigo-700 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isSubmitting ? "A enviar..." : "Enviar avaliação"}
-        </button>
-      </form>
+          {isSubmitting && <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true" />}
+          {isSubmitting ? t("evaluate.submitting") : t("evaluate.submit")}
+        </motion.button>
+      </motion.form>
       
-      <p className="mt-8 text-xs text-gray-400 text-center">
-        A tua avaliação é anónima.
+      <p className="mt-6 text-center text-xs text-gray-400 dark:text-slate-500">
+        {t("evaluate.anonymous")}
       </p>
     </div>
   );

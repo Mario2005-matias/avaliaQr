@@ -1,20 +1,16 @@
 import { useEffect, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { useTranslation } from "react-i18next";
+import { MonthSelector } from "../../components/MonthSelector";
 import { api } from "../../lib/api";
 import type { AdminTechnician } from "../../types/index";
 
 type ReportType = "monthly" | "technician";
 
 export default function AdminReports() {
-  const [month, setMonth] = useState(() => {
-    const parts = new Intl.DateTimeFormat("en-CA", {
-      timeZone: "Africa/Luanda",
-      year: "numeric",
-      month: "2-digit",
-    }).formatToParts(new Date());
-    const year = parts.find((part) => part.type === "year")?.value;
-    const monthPart = parts.find((part) => part.type === "month")?.value;
-    return year && monthPart ? `${year}-${monthPart}` : "";
-  });
+  const { t } = useTranslation();
+  const reduceMotion = useReducedMotion();
+  const [month, setMonth] = useState("");
   const [reportType, setReportType] = useState<ReportType>("monthly");
   const [technicianId, setTechnicianId] = useState("");
   const [technicians, setTechnicians] = useState<AdminTechnician[]>([]);
@@ -28,18 +24,18 @@ export default function AdminReports() {
         const { data } = await api.get<AdminTechnician[]>("/admin/technicians");
         setTechnicians(data);
       } catch {
-        setError("Não foi possível carregar a lista de técnicos.");
+        setError(t("adminReports.technicianLoadError"));
       } finally {
         setLoadingTechnicians(false);
       }
     }
 
     void loadTechnicians();
-  }, []);
+  }, [t]);
 
   async function handleDownload() {
     if (!month || (reportType === "technician" && !technicianId)) {
-      setError("Escolhe o mês e o técnico para gerar este relatório.");
+      setError(t("adminReports.chooseMonthTechnician"));
       return;
     }
 
@@ -62,7 +58,7 @@ export default function AdminReports() {
       link.remove();
       window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
     } catch {
-      setError("Não foi possível gerar o relatório. Tenta novamente.");
+      setError(t("adminReports.error"));
     } finally {
       setDownloading(false);
     }
@@ -70,32 +66,30 @@ export default function AdminReports() {
 
   return (
     <section className="mx-auto max-w-2xl space-y-6">
-      <h1 className="text-2xl font-bold text-gray-800">Relatórios</h1>
-      <div className="space-y-4 rounded-lg bg-white p-6 shadow-sm">
-        <label className="block text-sm font-medium text-gray-700">
-          Tipo de relatório
-          <select value={reportType} onChange={(event) => setReportType(event.target.value as ReportType)} className="mt-1 w-full rounded border border-gray-300 p-2">
-            <option value="monthly">Resumo mensal (técnicos e colégios)</option>
-            <option value="technician">Relatório de um técnico</option>
+      <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-slate-50">{t("adminReports.title")}</h1>
+      <MonthSelector onChange={setMonth} />
+      <div className="space-y-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300">
+          {t("adminReports.type")}
+          <select value={reportType} onChange={(event) => setReportType(event.target.value as ReportType)} className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-3 text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-50">
+            <option value="monthly">{t("adminReports.monthly")}</option>
+            <option value="technician">{t("adminReports.technicianReport")}</option>
           </select>
         </label>
-        <label className="block text-sm font-medium text-gray-700">
-          Mês
-          <input type="month" required value={month} onChange={(event) => setMonth(event.target.value)} className="mt-1 w-full rounded border border-gray-300 p-2" />
-        </label>
         {reportType === "technician" && (
-          <label className="block text-sm font-medium text-gray-700">
-            Técnico
-            <select required value={technicianId} onChange={(event) => setTechnicianId(event.target.value)} disabled={loadingTechnicians} className="mt-1 w-full rounded border border-gray-300 p-2">
-              <option value="">Escolhe um técnico...</option>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300">
+            {t("adminRatings.technician")}
+            <select required value={technicianId} onChange={(event) => setTechnicianId(event.target.value)} disabled={loadingTechnicians} className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-3 text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-50">
+              <option value="">{loadingTechnicians ? t("common.loading") : t("adminReports.selectTechnician")}</option>
               {technicians.map((technician) => <option key={technician.id} value={technician.id}>{technician.name}</option>)}
             </select>
           </label>
         )}
-        {error && <p role="alert" className="rounded bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-        <button onClick={() => void handleDownload()} disabled={downloading} className="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50">
-          {downloading ? "A gerar PDF..." : "Transferir PDF"}
-        </button>
+        {error && <p role="alert" className="rounded-2xl bg-rose-100 p-3 text-sm text-rose-700 dark:bg-rose-950/50 dark:text-rose-200">{error}</p>}
+        <motion.button onClick={() => void handleDownload()} disabled={downloading || !month} whileHover={reduceMotion ? undefined : { scale: 1.02 }} whileTap={reduceMotion ? undefined : { scale: 0.98 }} className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-400">
+          {downloading && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true" />}
+          {downloading ? t("adminReports.downloading") : t("adminReports.download")}
+        </motion.button>
       </div>
     </section>
   );

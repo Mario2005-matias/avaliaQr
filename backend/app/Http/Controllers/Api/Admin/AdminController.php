@@ -34,6 +34,7 @@ class AdminController extends Controller
             ],
             'school_id' => ['nullable', 'integer', 'exists:schools,id'],
             'month' => ['nullable', 'date_format:Y-m'],
+            'search' => ['nullable', 'string', 'max:255'],
             'page' => ['nullable', 'integer', 'min:1'],
         ]);
 
@@ -71,6 +72,16 @@ class AdminController extends Controller
             [$start, $end] = $this->reportService->monthRange($filters['month']);
             $query->where('created_at', '>=', $start)
                 ->where('created_at', '<', $end);
+        }
+
+        if (isset($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function ($ratingQuery) use ($search) {
+                $ratingQuery->where('comment', 'like', '%'.$search.'%')
+                    ->orWhereHas('serviceSession.technician', function ($technicianQuery) use ($search) {
+                        $technicianQuery->where('name', 'like', '%'.$search.'%');
+                    });
+            });
         }
 
         $ratings = $query->orderByDesc('created_at')
