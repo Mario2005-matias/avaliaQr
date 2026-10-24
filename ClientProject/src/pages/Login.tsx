@@ -44,9 +44,7 @@ export default function Login() {
       }
     } catch (error: unknown) {
       if (axios.isAxiosError<{ errors?: { email?: string[] } }>(error) && error.response?.status === 422) {
-        setError(
-          error.response.data.errors?.email?.[0] || t("login.invalidCredentials"),
-        );
+        setError(t("login.invalidCredentials"));
       } else {
         setError(t("login.connectionError"));
       }

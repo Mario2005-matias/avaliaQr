@@ -221,7 +221,7 @@ export default function AdminRatings() {
 
       {ratings && ratings.last_page > 1 && (
         <div className="flex items-center justify-between gap-3">
-          <p className="text-sm text-gray-600 dark:text-slate-400">{t("adminRatings.page", { current: ratings.current_page, last: ratings.last_page, total: ratings.total })}</p>
+          <p className="text-sm text-gray-600 dark:text-slate-400">{t("adminRatings.page", { current: ratings.current_page, last: ratings.last_page, total: ratings.total, count: ratings.total })}</p>
           <div className="flex gap-2">
             <button disabled={ratings.current_page <= 1} onClick={() => void loadRatings(ratings.current_page - 1)} className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
               {t("common.previous")}

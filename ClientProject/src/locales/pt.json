@@ -20,7 +20,8 @@
     "cancel": "Cancelar",
     "save": "Guardar",
     "error": "Ocorreu um erro. Tenta novamente.",
-    "stars": "{{count}} estrelas",
+    "stars_one": "{{count}} estrela",
+    "stars_other": "{{count}} estrelas",
     "previous": "Anterior",
     "next": "Seguinte"
   },
@@ -62,7 +63,8 @@
     "title": "Atendimentos de Hoje",
     "newSession": "Novo Atendimento",
     "empty": "Ainda não tens atendimentos hoje.",
-    "ratings": "avaliações",
+    "ratings_one": "avaliação",
+    "ratings_other": "avaliações",
     "showQr": "Mostrar QR",
     "revoke": "Encerrar",
     "viewRatings": "Ver avaliações",
@@ -129,7 +131,8 @@
     "reason": "Motivo",
     "confirmInvalidation": "Confirmar Invalidação",
     "saving": "A guardar...",
-    "page": "Página {{current}} de {{last}} · {{total}} avaliações"
+    "page_one": "Página {{current}} de {{last}} · {{count}} avaliação",
+    "page_other": "Página {{current}} de {{last}} · {{count}} avaliações"
   },
   "adminTechnicians": {
     "title": "Técnicos",

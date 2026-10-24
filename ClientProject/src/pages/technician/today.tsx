@@ -16,6 +16,8 @@ export default function Today() {
   // Estado do Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSchool, setSelectedSchool] = useState("");
+  const [sessionToRevoke, setSessionToRevoke] = useState<number | null>(null);
+  const [revokingSessionId, setRevokingSessionId] = useState<number | null>(null);
   const [creatingSession, setCreatingSession] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -72,13 +74,16 @@ export default function Today() {
   }
 
   async function handleRevoke(id: number) {
-    if (!confirm(t("today.confirmRevoke"))) return;
+    setRevokingSessionId(id);
     setActionError(null);
     try {
       await api.delete(`/technician/sessions/${id}`);
+      setSessionToRevoke(null);
       setReloadKey((key) => key + 1);
     } catch {
       setActionError(t("today.revokeError"));
+    } finally {
+      setRevokingSessionId(null);
     }
   }
 
@@ -140,7 +145,7 @@ export default function Today() {
                     <div className="min-w-0">
                     <h3 className="truncate text-lg font-bold tracking-tight text-gray-900 dark:text-slate-50">{s.school_name}</h3>
                     <p className="text-sm text-gray-500 dark:text-slate-400">
-                      {s.created_at} → {new Date(s.expires_at).toLocaleTimeString(i18n.resolvedLanguage === "en" ? "en" : "pt-AO", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Luanda" })} · {s.ratings_count} {t("today.ratings")}
+                      {s.created_at} → {new Date(s.expires_at).toLocaleTimeString(i18n.resolvedLanguage === "en" ? "en" : "pt-AO", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Luanda" })} · {t("today.ratings", { count: s.ratings_count })}
                       {s.ratings_count > 0 && ` · ★ ${s.average_rating}`}
                     </p>
                     </div>
@@ -162,7 +167,7 @@ export default function Today() {
                         {t("today.showQr")}
                       </motion.button>
                       <button 
-                        onClick={() => handleRevoke(s.id)}
+                        onClick={() => setSessionToRevoke(s.id)}
                         className="rounded-xl px-4 py-2 text-sm font-medium text-rose-600 transition-colors hover:bg-rose-50"
                       >
                         {t("today.revoke")}
@@ -211,6 +216,25 @@ export default function Today() {
                 </button>
               </div>
             </form>
+          </motion.div>
+        </motion.div>
+      )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+      {sessionToRevoke !== null && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-30 flex items-center justify-center bg-gray-950/50 p-4 backdrop-blur-sm">
+          <motion.div initial={reduceMotion ? false : { opacity: 0, scale: 0.92, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={reduceMotion ? undefined : { opacity: 0, scale: 0.96 }} transition={{ duration: 0.2 }} role="dialog" aria-modal="true" aria-labelledby="close-session-title" className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl dark:border dark:border-slate-700 dark:bg-slate-800">
+            <h2 id="close-session-title" className="text-xl font-bold tracking-tight text-gray-900 dark:text-slate-50">{t("today.revoke")}</h2>
+            <p className="mt-2 text-sm text-gray-600 dark:text-slate-400">{t("today.confirmRevoke")}</p>
+            {actionError && <p role="alert" className="mt-4 rounded-xl bg-rose-100 p-3 text-sm text-rose-700 dark:bg-rose-950/50 dark:text-rose-200">{actionError}</p>}
+            <div className="mt-6 flex justify-end gap-2">
+              <button type="button" onClick={() => { setSessionToRevoke(null); setActionError(null); }} className="rounded-xl px-4 py-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-700">{t("common.cancel")}</button>
+              <motion.button type="button" onClick={() => void handleRevoke(sessionToRevoke)} disabled={revokingSessionId !== null} whileHover={reduceMotion ? undefined : { scale: 1.03 }} whileTap={reduceMotion ? undefined : { scale: 0.97 }} className="flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-rose-700 disabled:opacity-60">
+                {revokingSessionId !== null && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true" />}
+                {t("today.revoke")}
+              </motion.button>
+            </div>
           </motion.div>
         </motion.div>
       )}

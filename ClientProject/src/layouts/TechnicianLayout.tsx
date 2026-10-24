@@ -1,4 +1,4 @@
-import { Link, Outlet, useNavigate } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../lib/api";
@@ -7,6 +7,7 @@ import { ThemeToggle } from "../components/ThemeToggle";
 
 export function TechnicianLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   const [error, setError] = useState<string | null>(null);
 
@@ -25,8 +26,8 @@ export function TechnicianLayout() {
       <nav className="border-b border-gray-100 bg-white/70 shadow-sm backdrop-blur-md transition-colors duration-300 dark:border-slate-700 dark:bg-slate-900/70">
         <div className="mx-auto flex min-h-16 max-w-4xl items-center justify-between gap-3 px-4 py-3">
           <div className="flex flex-wrap gap-2 font-medium text-gray-600">
-            <Link to="/technician/today" className="rounded-xl px-3 py-2 transition-colors hover:bg-indigo-50 hover:text-indigo-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-300">{t("navigation.today")}</Link>
-            <Link to="/technician/ratings" className="rounded-xl px-3 py-2 transition-colors hover:bg-indigo-50 hover:text-indigo-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-300">{t("navigation.myRatings")}</Link>
+            <Link to="/technician/today" aria-current={location.pathname === "/technician/today" ? "page" : undefined} className={`rounded-xl px-3 py-2 transition-colors ${location.pathname === "/technician/today" ? "bg-indigo-50 font-semibold text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300" : "hover:bg-indigo-50 hover:text-indigo-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-300"}`}>{t("navigation.today")}</Link>
+            <Link to="/technician/ratings" aria-current={location.pathname === "/technician/ratings" ? "page" : undefined} className={`rounded-xl px-3 py-2 transition-colors ${location.pathname === "/technician/ratings" ? "bg-indigo-50 font-semibold text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300" : "hover:bg-indigo-50 hover:text-indigo-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-300"}`}>{t("navigation.myRatings")}</Link>
           </div>
           <div className="flex items-center gap-1">
             <ThemeToggle />

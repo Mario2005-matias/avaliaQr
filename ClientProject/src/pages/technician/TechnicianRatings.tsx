@@ -50,7 +50,7 @@ export default function TechnicianRatings() {
         <motion.div initial={reduceMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
           <p className="text-sm font-medium text-gray-500 dark:text-slate-400">{t("technicianRatings.average")}</p>
           <p className="mt-1 text-3xl font-bold text-gray-900 dark:text-slate-50">
-            <span className="text-amber-500">★</span> {data.average_rating.toFixed(1)}
+            <span className="text-amber-500">★</span> {new Intl.NumberFormat(i18n.resolvedLanguage === "en" ? "en" : "pt-AO", { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(data.average_rating)}
           </p>
         </motion.div>
         <motion.div initial={reduceMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: reduceMotion ? 0 : 0.08 }} className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:border-slate-700 dark:bg-slate-800">

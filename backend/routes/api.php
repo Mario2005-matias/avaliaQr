@@ -7,7 +7,7 @@ use App\Http\Controllers\Api\Technician\TechnicianSessionController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('web')->group(base_path('routes/auth.php'));   // cookie mode exige 'web'
+Route::middleware('web')->group(base_path('routes/auth.php'));
 
 // Rotas Públicas (Avaliador)
 // Throttle: 20 pedidos por minuto por IP (podes ajustar)

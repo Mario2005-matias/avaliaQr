@@ -20,7 +20,8 @@
     "cancel": "Cancel",
     "save": "Save",
     "error": "Something went wrong. Please try again.",
-    "stars": "{{count}} stars",
+    "stars_one": "{{count}} star",
+    "stars_other": "{{count}} stars",
     "previous": "Previous",
     "next": "Next"
   },
@@ -62,7 +63,8 @@
     "title": "Today's service sessions",
     "newSession": "New session",
     "empty": "You don't have any service sessions today.",
-    "ratings": "ratings",
+    "ratings_one": "rating",
+    "ratings_other": "ratings",
     "showQr": "Show QR",
     "revoke": "Close",
     "viewRatings": "View ratings",
@@ -129,7 +131,8 @@
     "reason": "Reason",
     "confirmInvalidation": "Confirm invalidation",
     "saving": "Saving...",
-    "page": "Page {{current}} of {{last}} · {{total}} ratings"
+    "page_one": "Page {{current}} of {{last}} · {{count}} rating",
+    "page_other": "Page {{current}} of {{last}} · {{count}} ratings"
   },
   "adminTechnicians": {
     "title": "Technicians",
