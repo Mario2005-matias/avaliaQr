@@ -6,7 +6,7 @@ use App\Enums\Role;
 use App\Models\School;
 use App\Models\ServiceSession;
 use App\Models\User;
-use App\Service\ServiceSessionService as ServiceServiceSessionService;
+use App\Services\ServiceSessionService as ServiceServiceSessionService;
 use App\Services\ServiceSessionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
